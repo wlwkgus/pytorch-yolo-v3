@@ -39,7 +39,7 @@ def arg_parse():
 
     parser.add_argument("--scales", dest="scales", help="Scales to use for detection",
                         default="1,2,3", type=str)
-    parser.add_argument("--scales", dest="is_train", help="is train",
+    parser.add_argument("--is_train", dest="is_train", help="is train",
                         default="1", type=int)
 
     return parser.parse_args()
