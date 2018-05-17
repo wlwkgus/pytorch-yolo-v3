@@ -21,6 +21,7 @@ def get_data_loader(opt):
             root_dir='assets',
             train=True,
             transform=transform,
+            target_height=opt.reso
         )
         return DataLoader(
             train_set,
@@ -33,6 +34,7 @@ def get_data_loader(opt):
             root_dir='assets',
             train=False,
             transform=transform,
+            target_height=opt.reso
         )
         return DataLoader(
             test_set,
