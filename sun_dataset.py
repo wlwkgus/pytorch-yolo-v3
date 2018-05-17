@@ -74,7 +74,7 @@ class SunDataset(Dataset):
             width, height = sample['img'].size
             sample['img'] = self.transform(sample['img'])
             label = np.zeros([self.max_boxes, self.label_length + 5]).astype(np.float32)
-            for box_index in range(len(sample['label'])):
+            for box_index in range(len(raw_label)):
                 x_max = int(raw_label[box_index]['x_max'] / width * self.target_height)
                 x_min = int(raw_label[box_index]['x_min'] / width * self.target_height)
                 y_max = int(raw_label[box_index]['y_max'] / height * self.target_height)
