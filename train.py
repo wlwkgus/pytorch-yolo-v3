@@ -104,7 +104,7 @@ if __name__ == '__main__':
             # flatten the prediction vector
             # B x (bbox cord x no. of anchors) x grid_w x grid_h --> B x bbox x (all the boxes)
             # Put every proposed box as a row.
-            prediction = model(Variable(batch['img']), CUDA)
+            prediction = model(Variable(batch['img'], requires_grad=True), CUDA)
 
             prediction = prediction[:, scales_indices]
 
