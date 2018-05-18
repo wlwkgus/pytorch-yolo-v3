@@ -155,7 +155,7 @@ def create_modules(blocks):
             continue
         
         #If it's a convolutional layer
-        if (x["type"] == "convolutional"):
+        if x["type"] in ("convolutional", 'convolutional_final'):
             #Get the info about the layer
             activation = x["activation"]
             try:
@@ -386,7 +386,7 @@ class Darknet(nn.Module):
             if module_type == 'yolo':
                 continue
 
-            if module_type == "convolutional":
+            if module_type in "convolutional":
                 model = self.module_list[i]
                 try:
                     batch_normalize = int(self.blocks[i+1]["batch_normalize"])
