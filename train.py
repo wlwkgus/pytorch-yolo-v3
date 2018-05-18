@@ -65,8 +65,8 @@ if __name__ == '__main__':
     confidence = float(args.confidence)
     CUDA = torch.cuda.is_available()
 
-    num_classes = 80
-    classes = load_classes('data/coco.names')
+    num_classes = 5841
+    # classes = load_classes('data/coco.names')
 
     # Set up the neural network
     print("Loading network.....")

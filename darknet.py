@@ -297,7 +297,7 @@ class Darknet(nn.Module):
 
 
             module_type = (modules[i]["type"])
-            if module_type == "convolutional" or module_type == "upsample":
+            if module_type == "convolutional" or module_type == "upsample" or module_type == 'convolutional_final':
 
                 x = self.module_list[i](x)
                 outputs[i] = x
@@ -383,7 +383,7 @@ class Darknet(nn.Module):
         for i in range(len(self.module_list)):
             module_type = self.blocks[i + 1]["type"]
 
-            if module_type == 'yolo':
+            if module_type in ('yolo', 'convolutional_final'):
                 continue
 
             if module_type in "convolutional":
