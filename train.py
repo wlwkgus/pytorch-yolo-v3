@@ -65,7 +65,7 @@ if __name__ == '__main__':
     confidence = float(args.confidence)
     CUDA = torch.cuda.is_available()
 
-    num_classes = 5841
+    num_classes = 1
     # classes = load_classes('data/coco.names')
 
     # Set up the neural network
@@ -105,6 +105,7 @@ if __name__ == '__main__':
             # B x (bbox cord x no. of anchors) x grid_w x grid_h --> B x bbox x (all the boxes)
             # Put every proposed box as a row.
             prediction = model(Variable(batch['img'], requires_grad=True), CUDA)
+            prediction.requires_grad = True
 
             prediction = prediction[:, scales_indices]
 
@@ -187,10 +188,16 @@ if __name__ == '__main__':
             # objectness loss
             objectness_loss = torch.nn.BCELoss()(prediction[..., 4], ground_truth[..., 4])
             # class loss
-            class_loss = torch.nn.BCELoss()(
-                prediction[..., 5:] * is_greater_than_iou_threshold,
-                ground_truth[..., 5:] * is_greater_than_iou_threshold
-            )
+            if num_classes == 1:
+                class_loss = torch.nn.BCELoss()(
+                    prediction[..., 5:].unsqueeze(3) * is_greater_than_iou_threshold,
+                    ground_truth[..., 5:].unsqueeze(3) * is_greater_than_iou_threshold
+                )
+            else:
+                class_loss = torch.nn.BCELoss()(
+                    prediction[..., 5:] * is_greater_than_iou_threshold,
+                    ground_truth[..., 5:] * is_greater_than_iou_threshold
+                )
 
             total_loss = coordinate_loss + objectness_loss + class_loss
 
