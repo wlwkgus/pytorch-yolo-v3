@@ -1,5 +1,7 @@
 from __future__ import division
 import time
+from collections import OrderedDict
+
 from torch.autograd import Variable
 
 from sun_dataset import get_data_loader
@@ -9,6 +11,7 @@ import os
 import os.path as osp
 from darknet import Darknet
 from preprocess import prep_image, inp_to_image
+import visdom
 
 
 def arg_parse():
@@ -45,8 +48,32 @@ def arg_parse():
     return parser.parse_args()
 
 
+class PlotManager(object):
+    def __init__(self):
+        self.vis = visdom.Visdom(port=8001)
+        self.name = 'Object detection loss'
+        self.display_id = 0
+
+    def plot_errors(self, epoch, counter_ratio, errors):
+        if not hasattr(self, 'plot_data'):
+            self.plot_data = {'X': [], 'Y': [], 'legend': list(errors.keys())}
+        self.plot_data['X'].append(epoch + counter_ratio)
+        self.plot_data['Y'].append([errors[k] for k in self.plot_data['legend']])
+        self.vis.line(
+            X=np.stack([np.array(self.plot_data['X'])] * len(self.plot_data['legend']), 1),
+            Y=np.array(self.plot_data['Y']),
+            opts={
+                'title': self.name + ' loss over time',
+                'legend': self.plot_data['legend'],
+                'xlabel': 'step',
+                'ylabel': 'loss'},
+            win=self.display_id)
+
+
 if __name__ == '__main__':
+    # Visdom setting here
     args = arg_parse()
+    plot_manager = PlotManager()
 
     scales = args.scales
     scales = [int(x) for x in scales.split(',')]
@@ -92,7 +119,7 @@ if __name__ == '__main__':
     data_loader = get_data_loader(args)
 
     for epoch in range(100):
-        for i, batch in enumerate(data_loader):
+        for step, batch in enumerate(data_loader):
             # load the image
             start = time.time()
             if CUDA:
@@ -114,7 +141,7 @@ if __name__ == '__main__':
             # label : batch_size x variant boxes x 85
 
             # batch size x boxes x variant boxes x 85
-            expanded_prediction = prediction.unsqueeze(2).cuda(device='cuda:1')
+            expanded_prediction = prediction.unsqueeze(2).cuda(device='cuda:0')
             expanded_prediction = expanded_prediction.repeat(1, 1, batch['label'].size(1), 1)
             expanded_batch_label = batch['label'].unsqueeze(1).repeat(1, prediction.size(1), 1, 1)
 
@@ -206,4 +233,16 @@ if __name__ == '__main__':
             optm.step()
             torch.cuda.empty_cache()
             end = time.time()
-            print("[epoch : {}] : step {} loss = {} / {} elapsed".format(epoch, i, total_loss, end-start))
+            if step % 100 == 0:
+                print("[epoch : {}] : step {} loss = {} / {} elapsed".format(epoch, step, total_loss, end-start))
+                plot_manager.plot_errors(epoch, 0, OrderedDict([
+                    ('batch_loss', total_loss.numpy()[0]),
+                    ('none', 0.)
+                ]))
+
+        save_filename = 'yolo_net' + '-' + str(epoch)
+        save_path = os.path.join('ckpt', save_filename)
+        torch.save(model.cpu().state_dict(), save_path)
+
+        if CUDA:
+            model.cuda(device='cuda:0')
