@@ -123,31 +123,32 @@ if __name__ == '__main__':
                         (expanded_prediction[..., 0] - expanded_prediction[..., 2] / 2).unsqueeze(3),
                         expanded_batch_label[..., 0].unsqueeze(3)
                     ], dim=3)
-
-            )
+                , dim=3
+            )[0]
             iou_y1 = torch.max(
                 torch.cat(
                     [
                         (expanded_prediction[..., 1] - expanded_prediction[..., 3] / 2).unsqueeze(3),
                         expanded_batch_label[..., 1].unsqueeze(3)
                     ], dim=3)
-
-            )
+                , dim=3
+            )[0]
             iou_x2 = torch.min(
                 torch.cat(
                     [
                         (expanded_prediction[..., 0] + expanded_prediction[..., 2] / 2).unsqueeze(3),
                         expanded_batch_label[..., 2].unsqueeze(3)
                     ], dim=3)
-
-            )
+                , dim=3
+            )[0]
             iou_y2 = torch.min(
                 torch.cat(
                     [
                         (expanded_prediction[..., 1] + expanded_prediction[..., 3] / 2).unsqueeze(3),
                         expanded_batch_label[..., 3].unsqueeze(3)
                     ], dim=3)
-            )
+                , dim=3
+            )[0]
             # intersection tensor : batch_size x boxes x variant boxes
             intersection_tensor = torch.abs(iou_x1 - iou_x2) * torch.abs(iou_y1 - iou_y2)
             union_tensor = (expanded_prediction[..., 2] * expanded_prediction[..., 3]) +\
