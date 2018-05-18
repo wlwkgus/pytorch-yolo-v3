@@ -153,8 +153,8 @@ if __name__ == '__main__':
             intersection_tensor = torch.abs(iou_x1 - iou_x2) * torch.abs(iou_y1 - iou_y2)
             union_tensor = (expanded_prediction[..., 2] * expanded_prediction[..., 3]) +\
                            (
-                               torch.abs(batch['label'][..., 0] - batch['label'][..., 2]) *
-                               torch.abs(batch['label'][..., 1] - batch['label'][..., 3])
+                               torch.abs(expanded_batch_label[..., 0] - expanded_batch_label[..., 2]) *
+                               torch.abs(expanded_batch_label[..., 1] - expanded_batch_label[..., 3])
                            ) - intersection_tensor
 
             # iou_tensor : batch_size x boxes x variant boxes
