@@ -81,7 +81,7 @@ if __name__ == '__main__':
 
     # If there's a GPU availible, put the model on GPU
     if CUDA:
-        model.cuda()
+        model.cuda(device='cuda:0')
 
     optm = torch.optim.Adam(
         params=model.parameters(),
@@ -113,7 +113,7 @@ if __name__ == '__main__':
             # label : batch_size x variant boxes x 85
 
             # batch size x boxes x variant boxes x 85
-            expanded_prediction = prediction.unsqueeze(2)
+            expanded_prediction = prediction.unsqueeze(2).cuda(device='cuda:1')
             expanded_prediction = expanded_prediction.repeat(1, 1, batch['label'].size(1), 1)
             expanded_batch_label = batch['label'].unsqueeze(1).repeat(1, prediction.size(1), 1, 1)
 
@@ -170,7 +170,7 @@ if __name__ == '__main__':
                 torch.gather(
                     batch['label'],
                     1,
-                    top_iou_index.repeat(1, 1, batch['label'].size(2)).long()
+                    top_iou_index.repeat(1, 1, batch['label'].size(2)).long().cuda(device='cuda:0')
                 ),
                 requires_grad=False
             )
