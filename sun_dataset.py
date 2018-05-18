@@ -60,6 +60,8 @@ class SunDataset(Dataset):
             raise Exception("Test data not defined.")
 
         self.label_length = 5841
+        # No class prediction here!
+        self.label_length = 1
         self.max_boxes = 149
 
     def __len__(self):
@@ -85,6 +87,6 @@ class SunDataset(Dataset):
                 label[box_index][2] = float(x_max)
                 label[box_index][3] = float(y_max)
                 label[box_index][4] = 1.0
-                label[box_index][raw_label[box_index]['label'] + 5] = 1.0
+                label[box_index][5] = 1.0
             sample['label'] = label
         return sample
