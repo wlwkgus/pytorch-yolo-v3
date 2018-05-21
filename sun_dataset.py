@@ -74,7 +74,8 @@ class SunDataset(Dataset):
         raw_label = self.index_table[idx]['boxes']
 
         if self.transform is not None:
-            width, height = sample['img'].size
+            height = sample['img'].height
+            width = sample['img'].width
             sample['img'] = self.transform(sample['img'])
             label = np.zeros([self.max_boxes, self.label_length + 5]).astype(np.float32)
             for box_index in range(len(raw_label)):

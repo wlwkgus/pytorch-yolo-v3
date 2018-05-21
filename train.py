@@ -214,7 +214,26 @@ if __name__ == '__main__':
             # all the losses here.
             # coordinate loss
             coordinate_loss = torch.sum(
-                (prediction[..., :4] - ground_truth[..., :4]) * (prediction[..., :4] - ground_truth[..., :4])
+                (
+                    prediction[..., 0] - (ground_truth[..., 0] + ground_truth[..., 2]) / 2
+                ) * (
+                    prediction[..., 0] - (ground_truth[..., 0] + ground_truth[..., 2]) / 2
+                )
+                + (
+                    prediction[..., 1] - (ground_truth[..., 1] + ground_truth[..., 3]) / 2
+                ) * (
+                    prediction[..., 1] - (ground_truth[..., 1] + ground_truth[..., 3]) / 2
+                )
+                + (
+                    prediction[..., 2] - (ground_truth[..., 0] - ground_truth[..., 2])
+                ) * (
+                    prediction[..., 2] - (ground_truth[..., 0] - ground_truth[..., 2])
+                )
+                + (
+                    prediction[..., 3] - (ground_truth[..., 1] - ground_truth[..., 3])
+                ) * (
+                    prediction[..., 3] - (ground_truth[..., 1] - ground_truth[..., 3])
+                )
             ) / (prediction.size(0) * prediction.size(1))
             # objectness loss
             objectness_loss = torch.nn.BCELoss()(prediction[..., 4], ground_truth[..., 4])
@@ -246,20 +265,22 @@ if __name__ == '__main__':
                 total_loss.cuda(device='cuda:0')
                 color = (80, 7, 65)
                 single_prediction = prediction[0]
-                single_image_cv_format = (batch['img'][0].numpy() * 255).astype(np.int32).transpose(1, 2, 0)
+                single_image_cv_format = (batch['img'][0].cpu().numpy() * 255).astype(np.uint8).transpose(1, 2,
+                                                                                                          0).copy()
+                batch['img'].cuda()
                 single_image_cv_format = single_image_cv_format[..., ::-1]
                 for j in range(single_prediction.size(0)):
                     if single_prediction[j][4] < 0.5:
                         continue
                     x_center, y_center, w, h = tuple(single_prediction[j][0:4].int())
-                    cv2.rectangle(
-                        single_image_cv_format,
+                    single_image_cv_format = cv2.rectangle(
+                        single_image_cv_format.copy(),
                         (int(x_center - w / 2), int(y_center - h / 2)),
                         (int(x_center + w / 2), int(y_center + h / 2)),
                         color,
                         1
                     )
-                plot_manager.plot_image(single_image_cv_format[..., ::-1], 'sample_image')
+                plot_manager.plot_image(np.transpose(single_image_cv_format[..., ::-1], (2, 0, 1)), 'sample_image')
 
         save_filename = 'yolo_net' + '-' + str(epoch)
         save_path = os.path.join('ckpt', save_filename)
