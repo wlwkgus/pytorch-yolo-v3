@@ -239,10 +239,11 @@ if __name__ == '__main__':
             end = time.time()
             if step % 100 == 0:
                 print("[epoch : {}] : step {} loss = {} / {} elapsed".format(epoch, step, total_loss, end-start))
-                plot_manager.plot_errors(epoch, 0, OrderedDict([
-                    ('batch_loss', total_loss.numpy()[0]),
+                plot_manager.plot_errors(epoch * len(data_loader) + step, 0, OrderedDict([
+                    ('batch_loss', total_loss.cpu().data.numpy()),
                     ('none', 0.)
                 ]))
+                total_loss.cuda(device='cuda:0')
                 color = (80, 7, 65)
                 single_prediction = prediction[0]
                 single_image_cv_format = (batch['img'][0].numpy() * 255).astype(np.int32).transpose(1, 2, 0)
