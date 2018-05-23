@@ -213,6 +213,7 @@ if __name__ == '__main__':
             # is_greater_than_iou_threshold : batch_size x boxes
             # is_greater_than_iou_threshold : batch_size x variant boxes
             is_greater_than_iou_threshold = Variable((transposed_top_iou_value.squeeze() > 0.5).float(), requires_grad=False)
+            ground_truth_is_greater_than_iou_threshold = Variable((top_iou_value.squeeze() > 0.5).float(), requires_grad=False)
             # ground truth : batch_size x boxes x 85
             ground_truth = Variable(
                 torch.gather(
@@ -261,9 +262,13 @@ if __name__ == '__main__':
             # objectness loss
             coordinate_loss.requires_grad = True
             objectness_loss = torch.nn.BCELoss()(
-                selected_prediction[..., 4],
-                Variable(batch['label'][..., 4]) * is_greater_than_iou_threshold
+                prediction[..., 4],
+                ground_truth[..., 4] * ground_truth_is_greater_than_iou_threshold
             )
+            # objectness_loss = torch.nn.BCELoss()(
+            #     selected_prediction[..., 4],
+            #     Variable(batch['label'][..., 4]) * is_greater_than_iou_threshold
+            # )
             # class loss
             if num_classes == 1:
                 total_loss = coordinate_loss + objectness_loss
