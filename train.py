@@ -58,6 +58,7 @@ class PlotManager(object):
         self.vis = visdom.Visdom(port=args.display_port)
         self.name = 'Object detection loss'
         self.display_id = 0
+        self.image_titles = []
 
     def plot_errors(self, epoch, counter_ratio, errors):
         if not hasattr(self, 'plot_data'):
@@ -75,7 +76,9 @@ class PlotManager(object):
             win=self.display_id)
 
     def plot_image(self, image_numpy, title):
-        self.vis.image(image_numpy, opts=dict(title=title), win=self.display_id + 1)
+        if title not in self.image_titles:
+            self.image_titles.append(title)
+        self.vis.image(image_numpy, opts=dict(title=title), win=self.display_id + 1 + self.image_titles.index(title))
 
 
 if __name__ == '__main__':
@@ -280,22 +283,35 @@ if __name__ == '__main__':
                 total_loss.cuda(device='cuda:0')
                 color = (80, 7, 65)
                 single_prediction = prediction[0]
+                single_ground_truth = ground_truth[0]
                 single_image_cv_format = (batch['img'][0].cpu().numpy() * 255).astype(np.uint8).transpose(1, 2,
                                                                                                           0).copy()
                 batch['img'].cuda()
                 single_image_cv_format = single_image_cv_format[..., ::-1]
+                prediction_image = single_image_cv_format.copy()
+                ground_truth_image = single_image_cv_format.copy()
                 for j in range(single_prediction.size(0)):
                     if single_prediction[j][4] < 0.5:
                         continue
                     x_center, y_center, w, h = tuple(single_prediction[j][0:4].int())
-                    single_image_cv_format = cv2.rectangle(
-                        single_image_cv_format.copy(),
+                    prediction_image = cv2.rectangle(
+                        prediction.copy(),
                         (int(x_center - w / 2), int(y_center - h / 2)),
                         (int(x_center + w / 2), int(y_center + h / 2)),
                         color,
                         1
                     )
-                plot_manager.plot_image(np.transpose(single_image_cv_format[..., ::-1], (2, 0, 1)), 'sample_image')
+                    x_min, y_min, x_max, y_max = tuple(single_ground_truth[j][0:4].int())
+                    ground_truth_image = cv2.rectangle(
+                        ground_truth_image.copy(),
+                        (x_min, y_min),
+                        (x_max, y_max),
+                        color,
+                        1
+                    )
+
+                plot_manager.plot_image(np.transpose(prediction_image[..., ::-1], (2, 0, 1)), 'prediction')
+                plot_manager.plot_image(np.transpose(ground_truth_image[..., ::-1], (2, 0, 1)), 'ground truth')
 
         save_filename = 'yolo_net' + '-' + str(epoch)
         save_path = os.path.join(args.ckpt_dir, save_filename)
