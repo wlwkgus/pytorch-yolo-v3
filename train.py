@@ -238,24 +238,24 @@ if __name__ == '__main__':
             # coordinate loss
             coordinate_loss = torch.sum(
                 (
-                    selected_prediction[..., 0] - Variable(batch['label'][..., 0] + batch['label'][..., 2] / 2)
+                    selected_prediction[..., 0] - Variable(batch['label'][..., 0] + batch['label'][..., 2] / 2, requires_grad=True)
                 ) * (
-                    selected_prediction[..., 0] - Variable(batch['label'][..., 0] + batch['label'][..., 2] / 2)
+                    selected_prediction[..., 0] - Variable(batch['label'][..., 0] + batch['label'][..., 2] / 2, requires_grad=True)
                 ) * is_greater_than_iou_threshold
                 + (
-                    selected_prediction[..., 1] - Variable(batch['label'][..., 1] + batch['label'][..., 3] / 2)
+                    selected_prediction[..., 1] - Variable(batch['label'][..., 1] + batch['label'][..., 3] / 2, requires_grad=True)
                 ) * (
-                    selected_prediction[..., 1] - Variable(batch['label'][..., 1] + batch['label'][..., 3] / 2)
+                    selected_prediction[..., 1] - Variable(batch['label'][..., 1] + batch['label'][..., 3] / 2, requires_grad=True)
                 ) * is_greater_than_iou_threshold
                 + (
-                    selected_prediction[..., 2] - Variable(batch['label'][..., 0] - batch['label'][..., 2])
+                    selected_prediction[..., 2] - Variable(batch['label'][..., 0] - batch['label'][..., 2], requires_grad=True)
                 ) * (
-                    selected_prediction[..., 2] - Variable(batch['label'][..., 0] - batch['label'][..., 2])
+                    selected_prediction[..., 2] - Variable(batch['label'][..., 0] - batch['label'][..., 2], requires_grad=True)
                 ) * is_greater_than_iou_threshold
                 + (
-                    selected_prediction[..., 3] - Variable(batch['label'][..., 1] - batch['label'][..., 3])
+                    selected_prediction[..., 3] - Variable(batch['label'][..., 1] - batch['label'][..., 3], requires_grad=True)
                 ) * (
-                    selected_prediction[..., 3] - Variable(batch['label'][..., 1] - batch['label'][..., 3])
+                    selected_prediction[..., 3] - Variable(batch['label'][..., 1] - batch['label'][..., 3], requires_grad=True)
                 ) * is_greater_than_iou_threshold
             ) / (selected_prediction.size(0) * selected_prediction.size(1))
             # objectness loss
