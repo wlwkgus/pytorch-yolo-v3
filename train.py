@@ -295,7 +295,7 @@ if __name__ == '__main__':
                         continue
                     x_center, y_center, w, h = tuple(single_prediction[j][0:4].int())
                     prediction_image = cv2.rectangle(
-                        prediction.copy(),
+                        single_image_cv_format.copy(),
                         (int(x_center - w / 2), int(y_center - h / 2)),
                         (int(x_center + w / 2), int(y_center + h / 2)),
                         color,
