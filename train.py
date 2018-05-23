@@ -323,8 +323,8 @@ if __name__ == '__main__':
                         color,
                         1
                     )
-                del ground_truth_image
                 plot_manager.plot_image(np.transpose(ground_truth_image[..., ::-1], (2, 0, 1)), 'ground truth')
+                del ground_truth_image
 
         if epoch % 10 == 0:
             save_filename = 'yolo_net' + '-' + str(epoch)
