@@ -211,7 +211,8 @@ if __name__ == '__main__':
 
             # label : batch_size x variant boxes x 85
             # is_greater_than_iou_threshold : batch_size x boxes
-            is_greater_than_iou_threshold = Variable((top_iou_value.squeeze() > 0.5).float(), requires_grad=False)
+            # is_greater_than_iou_threshold : batch_size x variant boxes
+            is_greater_than_iou_threshold = Variable((transposed_top_iou_value.squeeze() > 0.5).float(), requires_grad=False)
             # ground truth : batch_size x boxes x 85
             ground_truth = Variable(
                 torch.gather(
