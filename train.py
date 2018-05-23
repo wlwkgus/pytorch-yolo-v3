@@ -26,7 +26,7 @@ def arg_parse():
     parser.add_argument("--images", dest='images', help=
     "Image / Directory containing images to perform detection upon",
                         default="imgs", type=str)
-    parser.add_argument("--bs", dest="bs", help="Batch size", default=2)
+    parser.add_argument("--bs", dest="bs", help="Batch size", default=2, type=int)
     parser.add_argument("--confidence", dest="confidence", help="Object Confidence to filter predictions", default=0.5)
     parser.add_argument("--nms_thresh", dest="nms_thresh", help="NMS Threshhold", default=0.4)
     parser.add_argument(
@@ -227,6 +227,7 @@ if __name__ == '__main__':
             )
 
             # if iou is lower than threshold, set objectness score zero.
+            ground_truth[..., 4].data = torch.squeeze(top_iou_value).data
             ground_truth[..., 4] *= is_greater_than_iou_threshold
 
             # all the losses here.

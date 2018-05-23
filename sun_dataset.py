@@ -11,7 +11,7 @@ import numpy as np
 def get_data_loader(opt):
     transform = transforms.Compose([
         transforms.Resize([opt.reso, opt.reso]),
-        transforms.ColorJitter(0.1, 0.1, 0.1, 0.1),
+        transforms.ColorJitter(0.3, 0.3, 0.3, 0.3),
         transforms.ToTensor(),
         # transforms.Normalize(mean=[0.485, 0.456, 0.406],
         #                      std=[0.229, 0.224, 0.225])
