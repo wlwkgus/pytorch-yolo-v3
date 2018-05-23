@@ -233,14 +233,14 @@ if __name__ == '__main__':
             # coordinate loss
             coordinate_loss = torch.sum(
                 (
-                    selected_prediction[..., 0] - Variable(batch['label'][..., 0] + batch['label'][..., 2]) / 2
+                    selected_prediction[..., 0] - Variable(batch['label'][..., 0] + batch['label'][..., 2] / 2)
                 ) * (
-                    selected_prediction[..., 0] - Variable(batch['label'][..., 0] + batch['label'][..., 2]) / 2
+                    selected_prediction[..., 0] - Variable(batch['label'][..., 0] + batch['label'][..., 2] / 2)
                 )
                 + (
-                    selected_prediction[..., 1] - Variable(batch['label'][..., 1] + batch['label'][..., 3]) / 2
+                    selected_prediction[..., 1] - Variable(batch['label'][..., 1] + batch['label'][..., 3] / 2)
                 ) * (
-                    selected_prediction[..., 1] - Variable(batch['label'][..., 1] + batch['label'][..., 3]) / 2
+                    selected_prediction[..., 1] - Variable(batch['label'][..., 1] + batch['label'][..., 3] / 2)
                 )
                 + (
                     selected_prediction[..., 2] - Variable(batch['label'][..., 0] - batch['label'][..., 2])
