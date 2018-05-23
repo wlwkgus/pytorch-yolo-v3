@@ -261,14 +261,14 @@ if __name__ == '__main__':
             ) / (selected_prediction.size(0) * selected_prediction.size(1))
             # objectness loss
             coordinate_loss.requires_grad = True
-            objectness_loss = torch.nn.BCELoss()(
-                prediction[..., 4],
-                ground_truth[..., 4] * ground_truth_is_greater_than_iou_threshold
-            )
             # objectness_loss = torch.nn.BCELoss()(
-            #     selected_prediction[..., 4],
-            #     Variable(batch['label'][..., 4]) * is_greater_than_iou_threshold
+            #     prediction[..., 4],
+            #     ground_truth[..., 4] * ground_truth_is_greater_than_iou_threshold
             # )
+            objectness_loss = torch.nn.BCELoss()(
+                selected_prediction[..., 4],
+                Variable(batch['label'][..., 4]) * is_greater_than_iou_threshold
+            )
             # class loss
             if num_classes == 1:
                 total_loss = coordinate_loss + objectness_loss
@@ -306,12 +306,15 @@ if __name__ == '__main__':
                         continue
                     x_center, y_center, w, h = tuple(single_prediction[j][0:4].int())
                     prediction_image = cv2.rectangle(
-                        single_image_cv_format.copy(),
+                        prediction_image.copy(),
                         (int(x_center - w / 2), int(y_center - h / 2)),
                         (int(x_center + w / 2), int(y_center + h / 2)),
                         color,
                         1
                     )
+                plot_manager.plot_image(np.transpose(prediction_image[..., ::-1], (2, 0, 1)), 'prediction')
+                del prediction_image
+                for j in range(single_prediction.size(0)):
                     x_min, y_min, x_max, y_max = tuple(single_ground_truth[j][0:4].int())
                     ground_truth_image = cv2.rectangle(
                         ground_truth_image.copy(),
@@ -320,8 +323,7 @@ if __name__ == '__main__':
                         color,
                         1
                     )
-
-                plot_manager.plot_image(np.transpose(prediction_image[..., ::-1], (2, 0, 1)), 'prediction')
+                del ground_truth_image
                 plot_manager.plot_image(np.transpose(ground_truth_image[..., ::-1], (2, 0, 1)), 'ground truth')
 
         if epoch % 10 == 0:
