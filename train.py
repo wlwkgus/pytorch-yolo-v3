@@ -40,6 +40,10 @@ def arg_parse():
     parser.add_argument("--reso", dest='reso', help=
     "Input resolution of the network. Increase to increase accuracy. Decrease to increase speed",
                         default="416", type=str)
+    parser.add_argument("--lr", dest='lr', help="learning rate", default=1e-4, type=float)
+    parser.add_argument("--weight_decay", dest='weight_decay', help='weight decay', default=1e-5, type=float)
+    parser.add_argument("--ckpt_dir", dest='ckpt_dir', help="ckpt dir", default="ckpt", type=str)
+    parser.add_argument("--display_port", dest='display_port', help="display port", default=8001, type=int)
 
     parser.add_argument("--scales", dest="scales", help="Scales to use for detection",
                         default="1,2,3", type=str)
@@ -51,7 +55,7 @@ def arg_parse():
 
 class PlotManager(object):
     def __init__(self):
-        self.vis = visdom.Visdom(port=8001)
+        self.vis = visdom.Visdom(port=args.display_port)
         self.name = 'Object detection loss'
         self.display_id = 0
 
@@ -116,13 +120,13 @@ if __name__ == '__main__':
 
     optm = torch.optim.Adam(
         params=model.parameters(),
-        lr=1e-4,
-        weight_decay=1e-5,
+        lr=args.lr,
+        weight_decay=args.weight_decay,
     )
 
     data_loader = get_data_loader(args)
 
-    for epoch in range(100):
+    for epoch in range(180):
         for step, batch in enumerate(data_loader):
             # load the image
             start = time.time()
@@ -191,9 +195,16 @@ if __name__ == '__main__':
 
             # iou_tensor : batch_size x boxes x variant boxes
             iou_tensor = intersection_tensor / union_tensor
+            # transposed iou tensor : batch_size x variant boxes x boxes
+            # transposed_iou_tensor = torch.transpose(iou_tensor, 1, 2).contiguous()
 
+            # TODO : assign top iou for each ground truth box.
             # top_iou_value : batch_size x boxes x 1
             top_iou_value, top_iou_index = torch.topk(iou_tensor, 1, dim=2)
+            # transposed_top_iou_value : batch_size x variant_boxes x 1
+            transposed_top_iou_value, transposed_top_iou_index = torch.topk(iou_tensor, 1, dim=1)
+            transposed_top_iou_value = torch.transpose(transposed_top_iou_value, 1, 2).contiguous()
+            transposed_top_iou_index = torch.transpose(transposed_top_iou_index, 1, 2).contiguous()
 
             # label : batch_size x variant boxes x 85
             # is_greater_than_iou_threshold : batch_size x boxes
@@ -207,6 +218,13 @@ if __name__ == '__main__':
                 ),
                 requires_grad=False
             )
+            selected_prediction = Variable(
+                torch.gather(
+                    prediction,
+                    1,
+                    transposed_top_iou_index.repeat(1, 1, prediction.size(2)).long().cuda(device="cuda:0")
+                )
+            )
 
             # if iou is lower than threshold, set objectness score zero.
             ground_truth[..., 4] *= is_greater_than_iou_threshold
@@ -215,41 +233,37 @@ if __name__ == '__main__':
             # coordinate loss
             coordinate_loss = torch.sum(
                 (
-                    prediction[..., 0] - (ground_truth[..., 0] + ground_truth[..., 2]) / 2
+                    selected_prediction[..., 0] - Variable(batch['label'][..., 0] + batch['label'][..., 2]) / 2
                 ) * (
-                    prediction[..., 0] - (ground_truth[..., 0] + ground_truth[..., 2]) / 2
+                    selected_prediction[..., 0] - Variable(batch['label'][..., 0] + batch['label'][..., 2]) / 2
                 )
                 + (
-                    prediction[..., 1] - (ground_truth[..., 1] + ground_truth[..., 3]) / 2
+                    selected_prediction[..., 1] - Variable(batch['label'][..., 1] + batch['label'][..., 3]) / 2
                 ) * (
-                    prediction[..., 1] - (ground_truth[..., 1] + ground_truth[..., 3]) / 2
+                    selected_prediction[..., 1] - Variable(batch['label'][..., 1] + batch['label'][..., 3]) / 2
                 )
                 + (
-                    prediction[..., 2] - (ground_truth[..., 0] - ground_truth[..., 2])
+                    selected_prediction[..., 2] - Variable(batch['label'][..., 0] - batch['label'][..., 2])
                 ) * (
-                    prediction[..., 2] - (ground_truth[..., 0] - ground_truth[..., 2])
+                    selected_prediction[..., 2] - Variable(batch['label'][..., 0] - batch['label'][..., 2])
                 )
                 + (
-                    prediction[..., 3] - (ground_truth[..., 1] - ground_truth[..., 3])
+                    selected_prediction[..., 3] - Variable(batch['label'][..., 1] - batch['label'][..., 3])
                 ) * (
-                    prediction[..., 3] - (ground_truth[..., 1] - ground_truth[..., 3])
+                    selected_prediction[..., 3] - Variable(batch['label'][..., 1] - batch['label'][..., 3])
                 )
-            ) / (prediction.size(0) * prediction.size(1))
+            ) / (selected_prediction.size(0) * selected_prediction.size(1))
             # objectness loss
             objectness_loss = torch.nn.BCELoss()(prediction[..., 4], ground_truth[..., 4])
             # class loss
             if num_classes == 1:
-                class_loss = torch.nn.BCELoss()(
-                    prediction[..., 5:].unsqueeze(3) * is_greater_than_iou_threshold,
-                    ground_truth[..., 5:].unsqueeze(3) * is_greater_than_iou_threshold
-                )
+                total_loss = coordinate_loss + objectness_loss
             else:
                 class_loss = torch.nn.BCELoss()(
                     prediction[..., 5:] * is_greater_than_iou_threshold,
                     ground_truth[..., 5:] * is_greater_than_iou_threshold
                 )
-
-            total_loss = coordinate_loss + objectness_loss + class_loss
+                total_loss = coordinate_loss + objectness_loss + class_loss
 
             optm.zero_grad()
             total_loss.backward()
@@ -283,7 +297,7 @@ if __name__ == '__main__':
                 plot_manager.plot_image(np.transpose(single_image_cv_format[..., ::-1], (2, 0, 1)), 'sample_image')
 
         save_filename = 'yolo_net' + '-' + str(epoch)
-        save_path = os.path.join('ckpt', save_filename)
+        save_path = os.path.join(args.ckpt_dir, save_filename)
         torch.save(model.cpu().state_dict(), save_path)
 
         if CUDA:
