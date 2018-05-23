@@ -230,8 +230,8 @@ if __name__ == '__main__':
             )
 
             # if iou is lower than threshold, set objectness score zero.
-            ground_truth[..., 4].data = torch.squeeze(top_iou_value).data
-            ground_truth[..., 4] *= is_greater_than_iou_threshold
+            # ground_truth[..., 4].data = torch.squeeze(top_iou_value).data
+            # ground_truth[..., 4] *= is_greater_than_iou_threshold
 
             # all the losses here.
             # coordinate loss
@@ -240,33 +240,37 @@ if __name__ == '__main__':
                     selected_prediction[..., 0] - Variable(batch['label'][..., 0] + batch['label'][..., 2] / 2)
                 ) * (
                     selected_prediction[..., 0] - Variable(batch['label'][..., 0] + batch['label'][..., 2] / 2)
-                )
+                ) * is_greater_than_iou_threshold
                 + (
                     selected_prediction[..., 1] - Variable(batch['label'][..., 1] + batch['label'][..., 3] / 2)
                 ) * (
                     selected_prediction[..., 1] - Variable(batch['label'][..., 1] + batch['label'][..., 3] / 2)
-                )
+                ) * is_greater_than_iou_threshold
                 + (
                     selected_prediction[..., 2] - Variable(batch['label'][..., 0] - batch['label'][..., 2])
                 ) * (
                     selected_prediction[..., 2] - Variable(batch['label'][..., 0] - batch['label'][..., 2])
-                )
+                ) * is_greater_than_iou_threshold
                 + (
                     selected_prediction[..., 3] - Variable(batch['label'][..., 1] - batch['label'][..., 3])
                 ) * (
                     selected_prediction[..., 3] - Variable(batch['label'][..., 1] - batch['label'][..., 3])
-                )
+                ) * is_greater_than_iou_threshold
             ) / (selected_prediction.size(0) * selected_prediction.size(1))
             # objectness loss
-            objectness_loss = torch.nn.BCELoss()(prediction[..., 4], ground_truth[..., 4])
+            objectness_loss = torch.nn.BCELoss()(
+                selected_prediction[..., 4],
+                Variable(batch['label'][..., 4]) * is_greater_than_iou_threshold
+            )
             # class loss
             if num_classes == 1:
                 total_loss = coordinate_loss + objectness_loss
             else:
-                class_loss = torch.nn.BCELoss()(
-                    prediction[..., 5:] * is_greater_than_iou_threshold,
-                    ground_truth[..., 5:] * is_greater_than_iou_threshold
-                )
+                # class_loss = torch.nn.BCELoss()(
+                #     prediction[..., 5:] * is_greater_than_iou_threshold,
+                #     ground_truth[..., 5:] * is_greater_than_iou_threshold
+                # )
+                class_loss = Variable(torch.FloatTensor([0.]))
                 total_loss = coordinate_loss + objectness_loss + class_loss
 
             optm.zero_grad()
