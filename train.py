@@ -238,27 +238,28 @@ if __name__ == '__main__':
             # coordinate loss
             coordinate_loss = torch.sum(
                 (
-                    selected_prediction[..., 0] - Variable(batch['label'][..., 0] + batch['label'][..., 2] / 2, requires_grad=True)
+                    selected_prediction[..., 0] - Variable(batch['label'][..., 0] - batch['label'][..., 2] / 2)
                 ) * (
-                    selected_prediction[..., 0] - Variable(batch['label'][..., 0] + batch['label'][..., 2] / 2, requires_grad=True)
+                    selected_prediction[..., 0] - Variable(batch['label'][..., 0] - batch['label'][..., 2] / 2)
                 ) * is_greater_than_iou_threshold
                 + (
-                    selected_prediction[..., 1] - Variable(batch['label'][..., 1] + batch['label'][..., 3] / 2, requires_grad=True)
+                    selected_prediction[..., 1] - Variable(batch['label'][..., 1] - batch['label'][..., 3] / 2)
                 ) * (
-                    selected_prediction[..., 1] - Variable(batch['label'][..., 1] + batch['label'][..., 3] / 2, requires_grad=True)
+                    selected_prediction[..., 1] - Variable(batch['label'][..., 1] - batch['label'][..., 3] / 2)
                 ) * is_greater_than_iou_threshold
                 + (
-                    selected_prediction[..., 2] - Variable(batch['label'][..., 0] - batch['label'][..., 2], requires_grad=True)
+                    selected_prediction[..., 2] - Variable(batch['label'][..., 0] - batch['label'][..., 2])
                 ) * (
-                    selected_prediction[..., 2] - Variable(batch['label'][..., 0] - batch['label'][..., 2], requires_grad=True)
+                    selected_prediction[..., 2] - Variable(batch['label'][..., 0] - batch['label'][..., 2])
                 ) * is_greater_than_iou_threshold
                 + (
-                    selected_prediction[..., 3] - Variable(batch['label'][..., 1] - batch['label'][..., 3], requires_grad=True)
+                    selected_prediction[..., 3] - Variable(batch['label'][..., 1] - batch['label'][..., 3])
                 ) * (
-                    selected_prediction[..., 3] - Variable(batch['label'][..., 1] - batch['label'][..., 3], requires_grad=True)
+                    selected_prediction[..., 3] - Variable(batch['label'][..., 1] - batch['label'][..., 3])
                 ) * is_greater_than_iou_threshold
             ) / (selected_prediction.size(0) * selected_prediction.size(1))
             # objectness loss
+            coordinate_loss.requires_grad = True
             objectness_loss = torch.nn.BCELoss()(
                 selected_prediction[..., 4],
                 Variable(batch['label'][..., 4]) * is_greater_than_iou_threshold
@@ -318,9 +319,9 @@ if __name__ == '__main__':
                 plot_manager.plot_image(np.transpose(prediction_image[..., ::-1], (2, 0, 1)), 'prediction')
                 plot_manager.plot_image(np.transpose(ground_truth_image[..., ::-1], (2, 0, 1)), 'ground truth')
 
-        save_filename = 'yolo_net' + '-' + str(epoch)
-        save_path = os.path.join(args.ckpt_dir, save_filename)
-        torch.save(model.cpu().state_dict(), save_path)
-
-        if CUDA:
-            model.cuda(device='cuda:0')
+        if epoch % 10 == 0:
+            save_filename = 'yolo_net' + '-' + str(epoch)
+            save_path = os.path.join(args.ckpt_dir, save_filename)
+            torch.save(model.cpu().state_dict(), save_path)
+            if CUDA:
+                model.cuda(device='cuda:0')
