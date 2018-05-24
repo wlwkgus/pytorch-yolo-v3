@@ -259,15 +259,12 @@ if __name__ == '__main__':
                     selected_prediction[..., 3] - Variable(batch['label'][..., 3] - batch['label'][..., 1])
                 ) * is_greater_than_iou_threshold * Variable(batch['label'][..., 4])
             ) / (selected_prediction.size(0) * selected_prediction.size(1))
-            coordinate_loss *= Variable(torch.sum(ground_truth[..., 4]))
             coordinate_loss.requires_grad = True
             # objectness loss
             objectness_loss = torch.nn.BCELoss()(
                 prediction[..., 4] * ground_truth[..., 4],
                 ground_truth[..., 4] * ground_truth_is_greater_than_iou_threshold
             )
-            objectness_loss *= Variable(torch.sum(ground_truth[..., 4]))
-            objectness_loss.requires_grad = True
             # objectness_loss = torch.nn.BCELoss()(
             #     selected_prediction[..., 4] * Variable(batch['label'][..., 4]),
             #     Variable(batch['label'][..., 4]) * is_greater_than_iou_threshold
