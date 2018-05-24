@@ -242,22 +242,22 @@ if __name__ == '__main__':
                     selected_prediction[..., 0] - Variable(batch['label'][..., 0] + batch['label'][..., 2] / 2)
                 ) * (
                     selected_prediction[..., 0] - Variable(batch['label'][..., 0] + batch['label'][..., 2] / 2)
-                ) * is_greater_than_iou_threshold
+                ) * is_greater_than_iou_threshold * Variable(batch['label'][..., 4])
                 + (
                     selected_prediction[..., 1] - Variable(batch['label'][..., 1] + batch['label'][..., 3] / 2)
                 ) * (
                     selected_prediction[..., 1] - Variable(batch['label'][..., 1] + batch['label'][..., 3] / 2)
-                ) * is_greater_than_iou_threshold
+                ) * is_greater_than_iou_threshold * Variable(batch['label'][..., 4])
                 + (
                     selected_prediction[..., 2] - Variable(batch['label'][..., 2] - batch['label'][..., 0])
                 ) * (
                     selected_prediction[..., 2] - Variable(batch['label'][..., 2] - batch['label'][..., 0])
-                ) * is_greater_than_iou_threshold
+                ) * is_greater_than_iou_threshold * Variable(batch['label'][..., 4])
                 + (
                     selected_prediction[..., 3] - Variable(batch['label'][..., 3] - batch['label'][..., 1])
                 ) * (
                     selected_prediction[..., 3] - Variable(batch['label'][..., 3] - batch['label'][..., 1])
-                ) * is_greater_than_iou_threshold
+                ) * is_greater_than_iou_threshold * Variable(batch['label'][..., 4])
             ) / (selected_prediction.size(0) * selected_prediction.size(1))
             # objectness loss
             coordinate_loss.requires_grad = True
@@ -266,7 +266,7 @@ if __name__ == '__main__':
             #     ground_truth[..., 4] * ground_truth_is_greater_than_iou_threshold
             # )
             objectness_loss = torch.nn.BCELoss()(
-                selected_prediction[..., 4],
+                selected_prediction[..., 4] * Variable(batch['label'][..., 4]),
                 Variable(batch['label'][..., 4]) * is_greater_than_iou_threshold
             )
             # class loss
