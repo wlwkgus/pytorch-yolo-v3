@@ -210,7 +210,7 @@ if __name__ == '__main__':
             transposed_top_iou_index = torch.transpose(transposed_top_iou_index, 1, 2).contiguous()
 
             # label : batch_size x variant boxes x 85
-            # is_greater_than_iou_threshold : batch_size x boxes
+            # ground_truth_is_greater_than_iou_threshold : batch_size x boxes
             # is_greater_than_iou_threshold : batch_size x variant boxes
             is_greater_than_iou_threshold = Variable((transposed_top_iou_value.squeeze() > 0.5).float(), requires_grad=False)
             ground_truth_is_greater_than_iou_threshold = Variable((top_iou_value.squeeze() > 0.5).float(), requires_grad=False)
@@ -259,16 +259,19 @@ if __name__ == '__main__':
                     selected_prediction[..., 3] - Variable(batch['label'][..., 3] - batch['label'][..., 1])
                 ) * is_greater_than_iou_threshold * Variable(batch['label'][..., 4])
             ) / (selected_prediction.size(0) * selected_prediction.size(1))
-            # objectness loss
+            coordinate_loss *= Variable(torch.sum(ground_truth[..., 4]))
             coordinate_loss.requires_grad = True
-            # objectness_loss = torch.nn.BCELoss()(
-            #     prediction[..., 4],
-            #     ground_truth[..., 4] * ground_truth_is_greater_than_iou_threshold
-            # )
+            # objectness loss
             objectness_loss = torch.nn.BCELoss()(
-                selected_prediction[..., 4] * Variable(batch['label'][..., 4]),
-                Variable(batch['label'][..., 4]) * is_greater_than_iou_threshold
+                prediction[..., 4] * ground_truth[..., 4],
+                ground_truth[..., 4] * ground_truth_is_greater_than_iou_threshold
             )
+            objectness_loss *= Variable(torch.sum(ground_truth[..., 4]))
+            objectness_loss.requires_grad = True
+            # objectness_loss = torch.nn.BCELoss()(
+            #     selected_prediction[..., 4] * Variable(batch['label'][..., 4]),
+            #     Variable(batch['label'][..., 4]) * is_greater_than_iou_threshold
+            # )
             # class loss
             if num_classes == 1:
                 total_loss = coordinate_loss + objectness_loss
