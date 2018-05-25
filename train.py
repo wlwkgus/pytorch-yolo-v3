@@ -198,6 +198,7 @@ if __name__ == '__main__':
 
             # iou_tensor : batch_size x boxes x variant boxes
             iou_tensor = intersection_tensor / union_tensor
+            iou_tensor *= expanded_batch_label[..., 4]
             # transposed iou tensor : batch_size x variant boxes x boxes
             # transposed_iou_tensor = torch.transpose(iou_tensor, 1, 2).contiguous()
 
