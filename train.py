@@ -189,7 +189,7 @@ if __name__ == '__main__':
                 , dim=3
             )[0]
             # intersection tensor : batch_size x boxes x variant boxes
-            intersection_tensor = torch.abs(iou_x1 - iou_x2) * torch.abs(iou_y1 - iou_y2)
+            intersection_tensor = torch.nn.ReLU()(iou_x2 - iou_x1) * torch.nn.ReLU()(iou_y2 - iou_y1)
             union_tensor = (expanded_prediction[..., 2] * expanded_prediction[..., 3]) +\
                            (
                                torch.abs(expanded_batch_label[..., 0] - expanded_batch_label[..., 2]) *
@@ -262,14 +262,14 @@ if __name__ == '__main__':
             ) / (selected_prediction.size(0) * selected_prediction.size(1))
             coordinate_loss.requires_grad = True
             # objectness loss
-            objectness_loss = torch.nn.BCELoss()(
-                prediction[..., 4] * ground_truth[..., 4],
-                ground_truth[..., 4] * ground_truth_is_greater_than_iou_threshold
-            )
             # objectness_loss = torch.nn.BCELoss()(
-            #     selected_prediction[..., 4] * Variable(batch['label'][..., 4]),
-            #     Variable(batch['label'][..., 4]) * is_greater_than_iou_threshold
+            #     prediction[..., 4] * ground_truth[..., 4],
+            #     ground_truth[..., 4] * ground_truth_is_greater_than_iou_threshold
             # )
+            objectness_loss = torch.nn.BCELoss()(
+                selected_prediction[..., 4] * Variable(batch['label'][..., 4]),
+                Variable(batch['label'][..., 4]) * is_greater_than_iou_threshold
+            )
             # class loss
             if num_classes == 1:
                 total_loss = coordinate_loss + objectness_loss
