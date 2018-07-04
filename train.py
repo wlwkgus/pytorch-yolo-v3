@@ -260,7 +260,30 @@ if __name__ == '__main__':
                     selected_prediction[..., 3] - Variable(batch['label'][..., 3] - batch['label'][..., 1])
                 ) * is_greater_than_iou_threshold * Variable(batch['label'][..., 4])
             ) / (selected_prediction.size(0) * selected_prediction.size(1))
-            coordinate_loss.requires_grad = True
+
+            # coordinate_loss = torch.sum(
+            #     (
+            #         prediction[..., 0] - (ground_truth[..., 0] + ground_truth[..., 2]) / 2
+            #     ) * (
+            #         prediction[..., 0] - (ground_truth[..., 0] + ground_truth[..., 2]) / 2
+            #     ) * ground_truth_is_greater_than_iou_threshold
+            #     + (
+            #         prediction[..., 1] - (ground_truth[..., 1] + ground_truth[..., 3]) / 2
+            #     ) * (
+            #         prediction[..., 1] - (ground_truth[..., 1] + ground_truth[..., 3]) / 2
+            #     ) * ground_truth_is_greater_than_iou_threshold
+            #     + (
+            #         prediction[..., 2] - (ground_truth[..., 2] - ground_truth[..., 0])
+            #     ) * (
+            #         prediction[..., 2] - (ground_truth[..., 2] - ground_truth[..., 0])
+            #     ) * ground_truth_is_greater_than_iou_threshold
+            #     + (
+            #         prediction[..., 3] - (ground_truth[..., 3] - ground_truth[..., 1])
+            #     ) * (
+            #         prediction[..., 3] - (ground_truth[..., 3] - ground_truth[..., 1])
+            #     ) * ground_truth_is_greater_than_iou_threshold
+            # ) / (prediction.size(0) * prediction.size(1))
+            # coordinate_loss.requires_grad = True
             # objectness loss
             # objectness_loss = torch.nn.BCELoss()(
             #     prediction[..., 4] * ground_truth[..., 4],
