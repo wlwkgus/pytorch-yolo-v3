@@ -190,7 +190,7 @@ if __name__ == '__main__':
             # single_prediction : boxes x 85
 
             # TODO : NMS here.
-            indexes = torch.topk(single_prediction[..., 4], k=prediction.size(0), dim=0)[1]
+            indexes = torch.topk(single_prediction[..., 4], k=single_prediction.size(0), dim=0)[1]
             sorted_single_prediction = single_prediction[indexes]
             in_out_flags = torch.ones(sorted_single_prediction.size(0))
             for i in range(sorted_single_prediction.size(0)):
@@ -199,22 +199,22 @@ if __name__ == '__main__':
                 if args.soft_nms:
                     for j in range(i+1, sorted_single_prediction.size(0)):
                         iou = get_iou(
-                            sorted_single_prediction[i].numpy(),
-                            sorted_single_prediction[j].numpy()
+                            sorted_single_prediction[i].cpu().numpy(),
+                            sorted_single_prediction[j].cpu().numpy()
                         )
                         sorted_single_prediction[j][4] *= math.exp(-iou * iou / 0.5)
                     in_out_flags = sorted_single_prediction[..., 4] > args.score_thresh
                 else:
                     for j in range(i+1, sorted_single_prediction.size(0)):
                         iou = get_iou(
-                            sorted_single_prediction[i].numpy(),
-                            sorted_single_prediction[j].numpy()
+                            sorted_single_prediction[i].cpu().numpy(),
+                            sorted_single_prediction[j].cpu().numpy()
                         )
                         if iou > args.nms_thresh:
                             in_out_flags[j] = 0
                     in_out_flags *= (sorted_single_prediction[..., 4] > args.score_thresh)
 
-            filtered_prediction = sorted_single_prediction[in_out_flags.nonzero()]
+            filtered_prediction = sorted_single_prediction[in_out_flags.nonzero().view(1, -1)]
 
             color = (80, 7, 65)
             single_label = batch['label'][0]
