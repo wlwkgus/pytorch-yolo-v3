@@ -199,16 +199,16 @@ if __name__ == '__main__':
                 if args.soft_nms:
                     for j in range(i+1, sorted_single_prediction.size(0)):
                         iou = get_iou(
-                            sorted_single_prediction[i].cpu().numpy(),
-                            sorted_single_prediction[j].cpu().numpy()
+                            sorted_single_prediction[i].data.cpu().numpy(),
+                            sorted_single_prediction[j].data.cpu().numpy()
                         )
                         sorted_single_prediction[j][4] *= math.exp(-iou * iou / 0.5)
                     in_out_flags = sorted_single_prediction[..., 4] > args.score_thresh
                 else:
                     for j in range(i+1, sorted_single_prediction.size(0)):
                         iou = get_iou(
-                            sorted_single_prediction[i].cpu().numpy(),
-                            sorted_single_prediction[j].cpu().numpy()
+                            sorted_single_prediction[i].data.cpu().numpy(),
+                            sorted_single_prediction[j].data.cpu().numpy()
                         )
                         if iou > args.nms_thresh:
                             in_out_flags[j] = 0
