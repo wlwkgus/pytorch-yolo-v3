@@ -203,7 +203,7 @@ if __name__ == '__main__':
                             sorted_single_prediction[j].numpy()
                         )
                         sorted_single_prediction[j][4] *= math.exp(-iou * iou / 0.5)
-                    in_out_flags = sorted_single_prediction[4] > args.score_thresh
+                    in_out_flags = sorted_single_prediction[..., 4] > args.score_thresh
                 else:
                     for j in range(i+1, sorted_single_prediction.size(0)):
                         iou = get_iou(
@@ -212,7 +212,7 @@ if __name__ == '__main__':
                         )
                         if iou > args.nms_thresh:
                             in_out_flags[j] = 0
-                    in_out_flags *= (sorted_single_prediction[4] > args.score_thresh)
+                    in_out_flags *= (sorted_single_prediction[..., 4] > args.score_thresh)
 
             filtered_prediction = sorted_single_prediction[in_out_flags.nonzero()]
 
