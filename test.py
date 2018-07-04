@@ -54,7 +54,7 @@ def arg_parse():
                         default="1", type=int)
     parser.add_argument("--load_epoch", dest="is_train", help="is train",
                         default="170", type=int)
-    parser.add_argument("--soft_nms", type=int, default=1, type=int)
+    parser.add_argument("--soft_nms", type=int, default=1)
 
     return parser.parse_args()
 
